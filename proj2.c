@@ -17,6 +17,7 @@ typedef struct Args
 } Argumenty;
 
 Argumenty args;
+FILE *file;
 
 int* Action = NULL;
 
@@ -59,8 +60,17 @@ void SKIBUS()
     printf("%d: BUS: finish\n", ++(*Action));
 }
 
-void LYZAR()
+void LYZAR(int zastavka)
 {
+    srand(getpid() + time(NULL));
+    fprintf(file, "%d: L %d: started", ++(*Action), getpid());
+    usleep(rand() % args.TL);
+    fprintf(file, "%d: L (%d): arrived to %d\n", ++(*Action), getpid(), zastavka);
+
+    fprintf(file, "%d: L (%d): boarding\n", ++(*Action), getpid(), zastavka);
+
+    fprintf(file, "%d: L (%d): going to ski\n", ++(*Action), getpid(), zastavka);
+
 }
 
 Argumenty getargs(char* argv[])
@@ -85,6 +95,18 @@ Argumenty getargs(char* argv[])
     return temp;
 }
 
+FILE* openFile()
+{
+    FILE *file;
+    file = fopen("proj2.out", "w");
+    if (file == NULL)
+    {
+        printf("Unable to open or create a file!");
+        return NULL;
+    }
+    return file;
+}
+
 int main(int argc, char **argv)
 {
     args = getargs(argv);
@@ -93,6 +115,7 @@ int main(int argc, char **argv)
         printf("Incorrect argument type!");
         return 1;
     }
+    file = openFile();
     
 
     Action = mmap(NULL, sizeof(*Action), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
@@ -117,7 +140,8 @@ int main(int argc, char **argv)
         {
             srand(getpid() + time(NULL));
             int zastavka = (rand() % args.Z) + 1;
-            printf("Lyzar (%d) se spawnul a jde na zastavku %d\n", getpid(), zastavka);
+            LYZAR(zastavka);
+            
             return 0;
         }
     }
