@@ -13,15 +13,12 @@ typedef struct Args
     int K;
     int TL;
     int TB;
+    int error;
 } Argumenty;
 
-int L;
-int Z;
-int K;
-int TL;
-int TB;
+Argumenty args;
 
-int *Action = NULL;
+int* Action = NULL;
 
 void SKIBUS()
 {
@@ -51,12 +48,12 @@ void SKIBUS()
     */
 
     printf("%d: BUS: started\n", ++(*Action));
-    usleep(rand() % TB);
+    usleep(rand() % args.TB);
     printf("%d: BUS: arrived to %d\n", ++(*Action), idZ);
     printf("%d: BUS: leaving %d\n", ++(*Action));
-    if (idZ < Z)
+    if (idZ < args.Z)
         idZ++;
-    usleep(rand() % TB);
+    usleep(rand() % args.TB);
     printf("%d: BUS: arrived to final\n", ++(*Action));
     printf("%d: BUS: leaving final\n", ++(*Action));
     printf("%d: BUS: finish\n", ++(*Action));
@@ -66,13 +63,37 @@ void LYZAR()
 {
 }
 
+Argumenty getargs(char* argv[])
+{
+    Argumenty temp;
+    temp.L = atoi(argv[1]);
+    temp.Z = atoi(argv[2]);
+    temp.K = atoi(argv[3]);
+    temp.TL = atoi(argv[4]);
+    temp.TB = atoi(argv[5]);
+    temp.error = 0;
+    if (temp.L > 2000 || temp.L < 0)
+        temp.error = -1;
+    if (temp.Z > 10 || temp.Z <= 0)
+        temp.error = -1;
+    if (temp.K < 10 || temp.K > 100)
+        temp.error = -1;
+    if (temp.TL < 0 || temp.TL > 10000)
+        temp.error = -1;
+    if (temp.TB < 0 || temp.TB > 1000)
+        temp.error = -1;
+    return temp;
+}
+
 int main(int argc, char **argv)
 {
-    L = atoi(argv[1]);
-    Z = atoi(argv[2]);
-    K = atoi(argv[3]);
-    TL = atoi(argv[4]);
-    TB = atoi(argv[5]);
+    args = getargs(argv);
+    if (args.error == -1)
+    {
+        printf("Incorrect argument type!");
+        return 1;
+    }
+    
 
     Action = mmap(NULL, sizeof(*Action), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
@@ -86,7 +107,7 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    for (int i = 0; i < L; i++)
+    for (int i = 0; i < args.L; i++)
     {
 
         pid_t lyzarID = fork();
@@ -95,7 +116,7 @@ int main(int argc, char **argv)
         else if (lyzarID == 0)
         {
             srand(getpid() + time(NULL));
-            int zastavka = (rand() % Z) + 1;
+            int zastavka = (rand() % args.Z) + 1;
             printf("Lyzar (%d) se spawnul a jde na zastavku %d\n", getpid(), zastavka);
             return 0;
         }
@@ -104,6 +125,6 @@ int main(int argc, char **argv)
     while (wait(NULL) > 0)
         ;
 
-    Action = munmap(NULL, sizeof(*Action));
+    munmap(Action, sizeof(*Action));
     return 0;
 }
